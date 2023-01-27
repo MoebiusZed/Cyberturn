@@ -3,11 +3,36 @@
 
 #include "CPP_GameStateManager.h"
 #include "CPP_Tile.h"
+#include "CPP_BaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 TArray<ACPP_Tile*> UCPP_GameStateManager::GetRimRange()
 {
 	return this->RimRange;
+}
+
+// This function is used to order all the characters in the game world by their assigned turn weight value
+// Call this function any time a new character joins a battle (and at start)
+void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
+{
+	GetAllCharactersByTurnWeight.Empty();
+	auto ReturnCharacters = TArray<AActor*>();
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACPP_BaseCharacter::StaticClass(), ReturnCharacters);
+	for (AActor* character : ReturnCharacters)
+	{
+		GetAllCharactersByTurnWeight.Add(Cast<ACPP_BaseCharacter>(character));
+	}
+	for (int x = 0; x < GetAllCharactersByTurnWeight.Num(); x += 1)
+	{
+		for (int y = 0; y < GetAllCharactersByTurnWeight.Num() - 1; y += 1)
+		{
+			if (GetAllCharactersByTurnWeight[y]->InitiativeTurnWeight > GetAllCharactersByTurnWeight[y + 1]->InitiativeTurnWeight) {
+				auto tmp = GetAllCharactersByTurnWeight[y];
+				GetAllCharactersByTurnWeight[y] = GetAllCharactersByTurnWeight[y + 1];
+				GetAllCharactersByTurnWeight[y + 1] = tmp;
+			}
+		}
+	}
 }
 
 // This function is used to populate AllGameworldTiles
@@ -24,6 +49,8 @@ void UCPP_GameStateManager::RegisterGameworldTiles()
 	}
 	//if (GEngine) GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Yellow, FString::Printf(TEXT("Number of elements after %i"), AllGameworldTiles.Num()));
 }
+
+
 
 // Sets the material and tile state data of all the tiles within MovementDistance of the StartTile.
 void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* StartTile, int32 MovementDistance)

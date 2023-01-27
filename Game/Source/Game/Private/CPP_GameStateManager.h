@@ -33,4 +33,11 @@ public:
 	// This function returns all the tiles in a range. The output will match the last SetRimRange function call.
 	UFUNCTION(BlueprintCallable, Category = "Rim")
 	TArray<class ACPP_Tile*> GetRimRange();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "TurnOrder")
+	TArray<class ACPP_BaseCharacter*> GetAllCharactersByTurnWeight;
+
+	// Find all actors of player class.
+	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
+	void RegisterAllCharactersByTurnWeight();
 };
