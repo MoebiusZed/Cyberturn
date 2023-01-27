@@ -6,33 +6,9 @@
 #include "CPP_BaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
-TArray<ACPP_Tile*> UCPP_GameStateManager::GetRimRange()
+TArray<ACPP_Tile*> UCPP_GameStateManager::GetAllGameworldTiles()
 {
-	return this->RimRange;
-}
-
-// This function is used to order all the characters in the game world by their assigned turn weight value
-// Call this function any time a new character joins a battle (and at start)
-void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
-{
-	GetAllCharactersByTurnWeight.Empty();
-	auto ReturnCharacters = TArray<AActor*>();
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACPP_BaseCharacter::StaticClass(), ReturnCharacters);
-	for (AActor* character : ReturnCharacters)
-	{
-		GetAllCharactersByTurnWeight.Add(Cast<ACPP_BaseCharacter>(character));
-	}
-	for (int x = 0; x < GetAllCharactersByTurnWeight.Num(); x += 1)
-	{
-		for (int y = 0; y < GetAllCharactersByTurnWeight.Num() - 1; y += 1)
-		{
-			if (GetAllCharactersByTurnWeight[y]->InitiativeTurnWeight > GetAllCharactersByTurnWeight[y + 1]->InitiativeTurnWeight) {
-				auto tmp = GetAllCharactersByTurnWeight[y];
-				GetAllCharactersByTurnWeight[y] = GetAllCharactersByTurnWeight[y + 1];
-				GetAllCharactersByTurnWeight[y + 1] = tmp;
-			}
-		}
-	}
+	return this->AllGameworldTiles;
 }
 
 // This function is used to populate AllGameworldTiles
@@ -40,17 +16,20 @@ void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
 void UCPP_GameStateManager::RegisterGameworldTiles()
 {
 	//if (GEngine) GEngine->AddOnScreenDebugMessage(1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Number of elements before %i"), AllGameworldTiles.Num()));
-	GetAllGameworldTiles.Empty();
+	AllGameworldTiles.Empty();
 	auto OutTiles = TArray<AActor*>();
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACPP_Tile::StaticClass(), OutTiles);
 	for (AActor* tile : OutTiles)
 	{
-		GetAllGameworldTiles.Add(Cast<ACPP_Tile>(tile));
+		AllGameworldTiles.Add(Cast<ACPP_Tile>(tile));
 	}
 	//if (GEngine) GEngine->AddOnScreenDebugMessage(2, 15.0f, FColor::Yellow, FString::Printf(TEXT("Number of elements after %i"), AllGameworldTiles.Num()));
 }
 
-
+TArray<ACPP_Tile*> UCPP_GameStateManager::GetRimRange()
+{
+	return this->RimRange;
+}
 
 // Sets the material and tile state data of all the tiles within MovementDistance of the StartTile.
 void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* StartTile, int32 MovementDistance)
@@ -136,7 +115,7 @@ void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* Sta
 	}
 
 	// Render Tile Materials
-	for (ACPP_Tile* tile : this->GetAllGameworldTiles)
+	for (ACPP_Tile* tile : this->AllGameworldTiles)
 	{
 		if (tile->RenderStage == ERenderStage::ToBeDemotedTile)
 		{
@@ -155,4 +134,70 @@ void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* Sta
 
 	this->RimRange = Tiles;
 	this->bWasLastCharacterAnEnemy = !OriginIsAgent;
+}
+
+TArray<ACPP_BaseCharacter*> UCPP_GameStateManager::GetAllCharactersByTurnWeight()
+{
+	return this->AllCharactersByTurnWeight;
+}
+
+// This function is used to order all the characters in the game world by their assigned turn weight value
+// Call this function any time a new character joins a battle (and at start)
+void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
+{
+	// Reset 
+	CurrentTurnIndex = 0;
+	AllCharactersByTurnWeight.Empty();
+	auto ReturnCharacters = TArray<AActor*>();
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACPP_BaseCharacter::StaticClass(), ReturnCharacters);
+	for (AActor* character : ReturnCharacters)
+	{
+		AllCharactersByTurnWeight.Add(Cast<ACPP_BaseCharacter>(character));
+	}
+	for (int x = 0; x < AllCharactersByTurnWeight.Num(); x += 1)
+	{
+		for (int y = 0; y < AllCharactersByTurnWeight.Num() - 1; y += 1)
+		{
+			if (AllCharactersByTurnWeight[y]->InitiativeTurnWeight > AllCharactersByTurnWeight[y + 1]->InitiativeTurnWeight) {
+				auto tmp = AllCharactersByTurnWeight[y];
+				AllCharactersByTurnWeight[y] = AllCharactersByTurnWeight[y + 1];
+				AllCharactersByTurnWeight[y + 1] = tmp;
+			}
+		}
+	}
+}
+
+// Returns the next character in a turn
+// Characters with 0 or less hp are skipped.
+ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
+{
+	if (this->AllCharactersByTurnWeight.IsEmpty() || this->AreAllCharactersDead()) return nullptr;
+
+	ACPP_BaseCharacter* character;
+	for (;;)
+	{
+		character = this->AllCharactersByTurnWeight[CurrentTurnIndex];
+
+		// CurrentTurnIndex is incremented after getting the character so the first character in the turn order isn't skipped.
+		CurrentTurnIndex = (CurrentTurnIndex + 1) % this->AllCharactersByTurnWeight.Num();
+
+		if (character->Health > 0.0f) break;
+	}
+	return character;
+}
+
+bool UCPP_GameStateManager::AreAllCharactersDead()
+{
+	int result = 0;
+	for (auto character : this->AllCharactersByTurnWeight) {
+		if (character->Health < 0.0f) result += 1;
+	}
+
+	if (result >= this->AllCharactersByTurnWeight.Num()) {
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

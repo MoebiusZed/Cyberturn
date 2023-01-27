@@ -18,6 +18,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float InitiativeTurnWeight = 0.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Health = 0.0f;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
