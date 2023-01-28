@@ -20,12 +20,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health = 0.0f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UUserWidget* OverlayUI;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
