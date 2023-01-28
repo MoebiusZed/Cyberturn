@@ -136,6 +136,37 @@ void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* Sta
 	this->bWasLastCharacterAnEnemy = !OriginIsAgent;
 }
 
+void UCPP_GameStateManager::ClearRimRange()
+{
+	// Resets Tiles from the last SetRimRange call.
+	for (ACPP_Tile* tile : this->RimRange)
+	{
+		tile->TileState = ETileState::Deactivated;
+		tile->RenderStage = ERenderStage::ToBeDemotedTile;
+		tile->bTileIsSelectable = false;
+	}
+
+	// Render Tile Materials
+	for (ACPP_Tile* tile : this->AllGameworldTiles)
+	{
+		if (tile->RenderStage == ERenderStage::ToBeDemotedTile)
+		{
+			tile->TileBody->SetMaterial(0, tile->NotValidMovementMaterial);
+			tile->RenderStage = ERenderStage::NotValidTile;
+		}
+
+		// !LastUpdatedTiles.Contains(tile) checks to see if the tile has already had it's material updated, if it hasn't then update material.
+		// this->LastEntityWasAI is used to ignore the above ^ if the last entity that used SetRimRange was an AI
+		// because AI doesn't update the materials of the tiles in its MovementDistance range like agents do.
+		if (tile->RenderStage == ERenderStage::ValidTile && (this->bWasLastCharacterAnEnemy || !RimRange.Contains(tile)))
+		{
+			tile->TileBody->SetMaterial(0, tile->ValidMovementMaterial);
+		}
+	}
+
+	this->RimRange.Empty();
+}
+
 TArray<ACPP_BaseCharacter*> UCPP_GameStateManager::GetAllCharactersByTurnWeight()
 {
 	return this->AllCharactersByTurnWeight;

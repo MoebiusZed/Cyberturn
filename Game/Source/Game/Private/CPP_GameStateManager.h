@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Rim")
 	void SetRimRange(const bool OriginIsAgent, class ACPP_Tile* StartTile, int32 MovementDistance);
 
+	UFUNCTION(BlueprintCallable, Category = "Rim")
+	void ClearRimRange();
+
 
 
 	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
