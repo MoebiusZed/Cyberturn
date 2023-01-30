@@ -138,6 +138,14 @@ void UCPP_GameStateManager::SetRimRange(const bool OriginIsAgent, ACPP_Tile* Sta
 
 void UCPP_GameStateManager::ClearRimRange()
 {
+	for (ACPP_Tile* tile : this->RimRange)
+	{
+		tile->TileBody->SetMaterial(0, tile->NotValidMovementMaterial);
+		tile->TileState = ETileState::Deactivated;
+		tile->RenderStage = ERenderStage::NotValidTile;
+		tile->bTileIsSelectable = false;
+	}
+	/*
 	// Resets Tiles from the last SetRimRange call.
 	for (ACPP_Tile* tile : this->RimRange)
 	{
@@ -163,6 +171,7 @@ void UCPP_GameStateManager::ClearRimRange()
 			tile->TileBody->SetMaterial(0, tile->ValidMovementMaterial);
 		}
 	}
+	*/
 
 	this->RimRange.Empty();
 }

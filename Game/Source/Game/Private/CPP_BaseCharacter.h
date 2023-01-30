@@ -22,10 +22,16 @@ public:
 	float Health = 0.0f;
 	
 	UPROPERTY(BlueprintReadWrite)
-	class UUserWidget* OverlayUI;
+	bool bIsMoving = false;
 
 	UPROPERTY(BlueprintReadWrite)
+	class UUserWidget* OverlayUI;
+
+	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, BlueprintReadWrite)
 	TArray<TEnumAsByte<EObjectTypeQuery>> TileType;
+
+	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, BlueprintReadWrite)
+	TArray<TEnumAsByte<EObjectTypeQuery>> GroundType;
 
 protected:
 	// Called when the game starts or when spawned
