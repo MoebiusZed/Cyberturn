@@ -20,6 +20,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Health = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxHealth = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Level = 1;
 	
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsMoving = false;
