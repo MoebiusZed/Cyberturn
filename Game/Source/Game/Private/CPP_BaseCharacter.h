@@ -26,6 +26,18 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int MaxAP = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int StartAP = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int CurrentAP = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Name = "Unset";
 	
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsMoving = false;
