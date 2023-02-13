@@ -58,6 +58,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
 	class ACPP_BaseCharacter* GetNextCharactersTurn();
 
-private:
-	bool AreAllCharactersDead();
+	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
+	void KillCharacter(class ACPP_BaseCharacter* character);
 };

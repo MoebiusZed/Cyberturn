@@ -145,33 +145,6 @@ void UCPP_GameStateManager::ClearRimRange()
 		tile->RenderStage = ERenderStage::NotValidTile;
 		tile->bTileIsSelectable = false;
 	}
-	/*
-	// Resets Tiles from the last SetRimRange call.
-	for (ACPP_Tile* tile : this->RimRange)
-	{
-		tile->TileState = ETileState::Deactivated;
-		tile->RenderStage = ERenderStage::ToBeDemotedTile;
-		tile->bTileIsSelectable = false;
-	}
-
-	// Render Tile Materials
-	for (ACPP_Tile* tile : this->AllGameworldTiles)
-	{
-		if (tile->RenderStage == ERenderStage::ToBeDemotedTile)
-		{
-			tile->TileBody->SetMaterial(0, tile->NotValidMovementMaterial);
-			tile->RenderStage = ERenderStage::NotValidTile;
-		}
-
-		// !LastUpdatedTiles.Contains(tile) checks to see if the tile has already had it's material updated, if it hasn't then update material.
-		// this->LastEntityWasAI is used to ignore the above ^ if the last entity that used SetRimRange was an AI
-		// because AI doesn't update the materials of the tiles in its MovementDistance range like agents do.
-		if (tile->RenderStage == ERenderStage::ValidTile && (this->bWasLastCharacterAnEnemy || !RimRange.Contains(tile)))
-		{
-			tile->TileBody->SetMaterial(0, tile->ValidMovementMaterial);
-		}
-	}
-	*/
 
 	this->RimRange.Empty();
 }
@@ -185,59 +158,57 @@ TArray<ACPP_BaseCharacter*> UCPP_GameStateManager::GetAllCharactersByTurnWeight(
 // Call this function any time a new character joins a battle (and at start)
 void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
 {
-	// Reset 
-	CurrentTurnIndex = 0;
-	AllCharactersByTurnWeight.Empty();
+	// Reset values
+	this->CurrentTurnIndex = 0;
+	this->AllCharactersByTurnWeight.Empty();
+
+	// Get all characters, and typecast from AActor to ACPP_BaseCharacter
 	auto ReturnCharacters = TArray<AActor*>();
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACPP_BaseCharacter::StaticClass(), ReturnCharacters);
 	for (AActor* character : ReturnCharacters)
 	{
-		AllCharactersByTurnWeight.Add(Cast<ACPP_BaseCharacter>(character));
+		this->AllCharactersByTurnWeight.Add(Cast<ACPP_BaseCharacter>(character));
 	}
-	for (int x = 0; x < AllCharactersByTurnWeight.Num(); x += 1)
+
+	// Order all characters by turn weight in ascending order
+	for (int x = 0; x < this->AllCharactersByTurnWeight.Num(); x += 1)
 	{
-		for (int y = 0; y < AllCharactersByTurnWeight.Num() - 1; y += 1)
+		for (int y = 0; y < this->AllCharactersByTurnWeight.Num() - 1; y += 1)
 		{
-			if (AllCharactersByTurnWeight[y]->InitiativeTurnWeight > AllCharactersByTurnWeight[y + 1]->InitiativeTurnWeight) {
-				auto tmp = AllCharactersByTurnWeight[y];
-				AllCharactersByTurnWeight[y] = AllCharactersByTurnWeight[y + 1];
-				AllCharactersByTurnWeight[y + 1] = tmp;
+			if (this->AllCharactersByTurnWeight[y]->InitiativeTurnWeight > this->AllCharactersByTurnWeight[y + 1]->InitiativeTurnWeight) {
+				auto tmp = this->AllCharactersByTurnWeight[y];
+				this->AllCharactersByTurnWeight[y] = this->AllCharactersByTurnWeight[y + 1];
+				this->AllCharactersByTurnWeight[y + 1] = tmp;
 			}
 		}
 	}
 }
 
 // Returns the next character in a turn
-// Characters with 0 or less hp are skipped.
 ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 {
-	if (this->AllCharactersByTurnWeight.IsEmpty() || this->AreAllCharactersDead()) return nullptr;
+	if (this->AllCharactersByTurnWeight.IsEmpty()) return nullptr;
 
-	ACPP_BaseCharacter* character;
-	for (;;)
-	{
-		character = this->AllCharactersByTurnWeight[CurrentTurnIndex];
+	ACPP_BaseCharacter* character = this->AllCharactersByTurnWeight[this->CurrentTurnIndex];
 
-		// CurrentTurnIndex is incremented after getting the character so the first character in the turn order isn't skipped.
-		CurrentTurnIndex = (CurrentTurnIndex + 1) % this->AllCharactersByTurnWeight.Num();
+	// CurrentTurnIndex is incremented after getting the character so the first character in the turn order isn't skipped.
+	this->CurrentTurnIndex = (this->CurrentTurnIndex + 1) % this->AllCharactersByTurnWeight.Num();
 
-		if (character->Health > 0.0f) break;
-	}
 	return character;
 }
 
-bool UCPP_GameStateManager::AreAllCharactersDead()
+// KillCharacter can't kill the currently active character, or there will be bugs...
+void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 {
-	int result = 0;
-	for (auto character : this->AllCharactersByTurnWeight) {
-		if (character->Health < 0.0f) result += 1;
+	for (int index = 0; index < this->AllCharactersByTurnWeight.Num(); index += 1) {
+		if (this->AllCharactersByTurnWeight[index] == character) {
+			ACPP_BaseCharacter* character_to_delete = this->AllCharactersByTurnWeight[index];
+			this->AllCharactersByTurnWeight.RemoveAt(index);
+			character_to_delete->Destroy();
+			break;
+		}
 	}
 
-	if (result >= this->AllCharactersByTurnWeight.Num()) {
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	this->CurrentTurnIndex -= 1;
+	if (this->CurrentTurnIndex < 0) this->CurrentTurnIndex = 0;
 }
