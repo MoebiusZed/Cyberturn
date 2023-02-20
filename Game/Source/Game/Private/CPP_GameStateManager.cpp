@@ -225,7 +225,7 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 
 			// Keeps the next turn in sync. If the character killed comes before the currently
 			// active character, then it causes the CurrentTurnIndex to skip the next characters turn.
-			if (index < currentlyActiveCharacter) this->CurrentTurnIndex -= 1;
+			if (index < this->CurrentTurnIndex) this->CurrentTurnIndex -= 1;
 
 			if (this->CurrentTurnIndex >= this->AllCharactersByTurnWeight.Num()) this->CurrentTurnIndex = 0;
 			
