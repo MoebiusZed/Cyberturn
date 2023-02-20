@@ -197,9 +197,42 @@ ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 	return character;
 }
 
-// KillCharacter can't kill the currently active character, or there will be bugs...
+// KillCharacter can't kill the currently active character
+// This is because it doesn't clean up stuff like ui. This can lead to a bug where 
+// The UI of the agent is still on the screen
 void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 {
+	if (this->AllCharactersByTurnWeight.Num() == 0) return;
+
+	// CurrentTurnIndex always reflects 1 turn in the future. So to get the array index
+	// of the current character's turn, you subtract 1. This is because CurrentTurnIndex is
+	// incremented after the current character for a turn is returned by GetNextCharactersTurn
+	int currentlyActiveCharacter = this->CurrentTurnIndex - 1;
+
+	for (int index = 0; index < this->AllCharactersByTurnWeight.Num(); index += 1)
+	{
+		// Find the "character" location of the character to kill in "this->AllCharactersByTurnWeight"
+		// the location if when found is index.
+		if (this->AllCharactersByTurnWeight[index] == character)
+		{
+			// We do not want to kill the character if it's the currently active one.
+			if (currentlyActiveCharacter == index) return;
+
+			// Kills the "character"
+			ACPP_BaseCharacter* character_to_delete = this->AllCharactersByTurnWeight[index];
+			this->AllCharactersByTurnWeight.RemoveAt(index);
+			character_to_delete->Destroy();
+
+			// Keeps the next turn in sync. If the character killed comes before the currently
+			// active character, then it causes the CurrentTurnIndex to skip the next characters turn.
+			if (index < currentlyActiveCharacter) this->CurrentTurnIndex -= 1;
+
+			if (this->CurrentTurnIndex >= this->AllCharactersByTurnWeight.Num()) this->CurrentTurnIndex = 0;
+			
+			break;
+		}
+	}
+	/*
 	for (int index = 0; index < this->AllCharactersByTurnWeight.Num(); index += 1) {
 		if (this->AllCharactersByTurnWeight[index] == character) {
 			ACPP_BaseCharacter* character_to_delete = this->AllCharactersByTurnWeight[index];
@@ -211,4 +244,5 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 
 	this->CurrentTurnIndex -= 1;
 	if (this->CurrentTurnIndex < 0) this->CurrentTurnIndex = 0;
+	*/
 }
