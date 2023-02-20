@@ -232,17 +232,4 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 			break;
 		}
 	}
-	/*
-	for (int index = 0; index < this->AllCharactersByTurnWeight.Num(); index += 1) {
-		if (this->AllCharactersByTurnWeight[index] == character) {
-			ACPP_BaseCharacter* character_to_delete = this->AllCharactersByTurnWeight[index];
-			this->AllCharactersByTurnWeight.RemoveAt(index);
-			character_to_delete->Destroy();
-			break;
-		}
-	}
-
-	this->CurrentTurnIndex -= 1;
-	if (this->CurrentTurnIndex < 0) this->CurrentTurnIndex = 0;
-	*/
 }
