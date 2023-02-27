@@ -58,6 +58,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
 	class ACPP_BaseCharacter* GetNextCharactersTurn();
 
+	int GetCharacterTurnIndex();
+
+	void UpdateCurrentTurnIndex(int num);
+	
 	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
 	void KillCharacter(class ACPP_BaseCharacter* character);
+
+	UFUNCTION(BlueprintCallable, Category = "TurnOrder")
+	void AddCharacterToTurn(class ACPP_BaseCharacter* character);
 };

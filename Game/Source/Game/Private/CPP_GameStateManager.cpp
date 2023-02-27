@@ -197,6 +197,22 @@ ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 	return character;
 }
 
+int UCPP_GameStateManager::GetCharacterTurnIndex()
+{
+	// GetCurrentTurnIndex always reflects 1 turn in the future. So to get the array index
+	// of the current character's turn, you subtract 1. This is because CurrentTurnIndex is
+	// incremented after the current character for a turn is returned by GetNextCharactersTurn
+	return this->CurrentTurnIndex - 1;
+}
+
+void UCPP_GameStateManager::UpdateCurrentTurnIndex(int num)
+{
+	this->CurrentTurnIndex = this->CurrentTurnIndex + num;
+
+	if (this->CurrentTurnIndex >= this->AllCharactersByTurnWeight.Num()) this->CurrentTurnIndex = 0;
+	if (this->CurrentTurnIndex < 0) this->CurrentTurnIndex = 0;
+}
+
 // KillCharacter can't kill the currently active character
 // This is because it doesn't clean up stuff like ui. This can lead to a bug where 
 // The UI of the agent is still on the screen
@@ -204,10 +220,7 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 {
 	if (this->AllCharactersByTurnWeight.Num() == 0) return;
 
-	// CurrentTurnIndex always reflects 1 turn in the future. So to get the array index
-	// of the current character's turn, you subtract 1. This is because CurrentTurnIndex is
-	// incremented after the current character for a turn is returned by GetNextCharactersTurn
-	int currentlyActiveCharacter = this->CurrentTurnIndex - 1;
+	int currentlyActiveCharacter = this->GetCharacterTurnIndex();
 
 	for (int index = 0; index < this->AllCharactersByTurnWeight.Num(); index += 1)
 	{
@@ -225,11 +238,27 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 
 			// Keeps the next turn in sync. If the character killed comes before the currently
 			// active character, then it causes the CurrentTurnIndex to skip the next characters turn.
-			if (index < this->CurrentTurnIndex) this->CurrentTurnIndex -= 1;
+			if (index < this->CurrentTurnIndex) this->UpdateCurrentTurnIndex(-1);
 
-			if (this->CurrentTurnIndex >= this->AllCharactersByTurnWeight.Num()) this->CurrentTurnIndex = 0;
-			
 			break;
+		}
+	}
+}
+
+
+// Call this function after spawning a character to include it in the turn order.
+// You will also need to register meta data again.
+void UCPP_GameStateManager::AddCharacterToTurn(ACPP_BaseCharacter* character)
+{
+	if (this->AllCharactersByTurnWeight.Num() == 0) return;
+
+	for (int x = 0; x < this->AllCharactersByTurnWeight.Num(); x += 1)
+	{
+		if (character->InitiativeTurnWeight < this->AllCharactersByTurnWeight[x]->InitiativeTurnWeight)
+		{
+			this->AllCharactersByTurnWeight.Insert(character, x);
+
+			if (x < this->CurrentTurnIndex) this->UpdateCurrentTurnIndex(1);
 		}
 	}
 }
