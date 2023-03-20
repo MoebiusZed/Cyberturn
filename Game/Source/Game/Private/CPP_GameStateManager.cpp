@@ -190,6 +190,8 @@ ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 	if (this->AllCharactersByTurnWeight.IsEmpty()) return nullptr;
 
 	ACPP_BaseCharacter* character = this->AllCharactersByTurnWeight[this->CurrentTurnIndex];
+	character->CurrentAP += character->StartAP;
+	character->CurrentAP = FMath::Clamp(character->CurrentAP, 0, character->MaxAP);
 
 	// CurrentTurnIndex is incremented after getting the character so the first character in the turn order isn't skipped.
 	this->CurrentTurnIndex = (this->CurrentTurnIndex + 1) % this->AllCharactersByTurnWeight.Num();
