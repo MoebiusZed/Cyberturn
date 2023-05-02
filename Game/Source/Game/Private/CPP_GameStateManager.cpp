@@ -187,6 +187,7 @@ void UCPP_GameStateManager::RegisterAllCharactersByTurnWeight()
 // Returns the next character in a turn
 ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 {
+	UE_LOG(LogTemp, Error, TEXT("GetNextCharactersTurn in %d"), this->CurrentTurnIndex);
 	if (this->AllCharactersByTurnWeight.IsEmpty()) return nullptr;
 
 	ACPP_BaseCharacter* character = this->AllCharactersByTurnWeight[this->CurrentTurnIndex];
@@ -195,6 +196,8 @@ ACPP_BaseCharacter* UCPP_GameStateManager::GetNextCharactersTurn()
 
 	// CurrentTurnIndex is incremented after getting the character so the first character in the turn order isn't skipped.
 	this->CurrentTurnIndex = (this->CurrentTurnIndex + 1) % this->AllCharactersByTurnWeight.Num();
+
+	UE_LOG(LogTemp, Error, TEXT("GetNextCharactersTurn out %d"), this->CurrentTurnIndex);
 
 	return character;
 }
@@ -209,10 +212,13 @@ int UCPP_GameStateManager::GetCharacterTurnIndex()
 
 void UCPP_GameStateManager::UpdateCurrentTurnIndex(int num)
 {
+	UE_LOG(LogTemp, Error, TEXT("UpdateCurrentTurnIndex in %d"), this->CurrentTurnIndex);
 	this->CurrentTurnIndex = this->CurrentTurnIndex + num;
 
 	if (this->CurrentTurnIndex >= this->AllCharactersByTurnWeight.Num()) this->CurrentTurnIndex = 0;
 	if (this->CurrentTurnIndex < 0) this->CurrentTurnIndex = 0;
+
+	UE_LOG(LogTemp, Error, TEXT("UpdateCurrentTurnIndex out %d"), this->CurrentTurnIndex);
 }
 
 // KillCharacter can't kill the currently active character
@@ -220,6 +226,8 @@ void UCPP_GameStateManager::UpdateCurrentTurnIndex(int num)
 // The UI of the agent is still on the screen
 void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 {
+	UE_LOG(LogTemp, Error, TEXT("Kill Character"));
+
 	if (this->AllCharactersByTurnWeight.Num() == 0) return;
 
 	int currentlyActiveCharacter = this->GetCharacterTurnIndex();
@@ -240,7 +248,7 @@ void UCPP_GameStateManager::KillCharacter(ACPP_BaseCharacter* character)
 
 			// Keeps the next turn in sync. If the character killed comes before the currently
 			// active character, then it causes the CurrentTurnIndex to skip the next characters turn.
-			if (index < this->CurrentTurnIndex) this->UpdateCurrentTurnIndex(-1);
+			if (index <= this->CurrentTurnIndex) this->UpdateCurrentTurnIndex(-1);
 
 			break;
 		}
