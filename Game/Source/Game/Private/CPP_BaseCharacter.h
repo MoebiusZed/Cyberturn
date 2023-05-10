@@ -45,6 +45,9 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	class UUserWidget* OverlayUI;
 
+	UPROPERTY(BlueprintReadWrite)
+	class UUserWidget* ModifierUI;
+
 	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, BlueprintReadWrite)
 	TArray<TEnumAsByte<EObjectTypeQuery>> TileType;
 
